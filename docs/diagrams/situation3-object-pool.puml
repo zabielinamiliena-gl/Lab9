@@ -1,0 +1,58 @@
+@startuml situation3-object-pool
+skinparam classAttributeIconSize 0
+skinparam shadowing false
+title Ситуація 3. Обмежене наземне обладнання (Object Pool)
+
+class Program <<Client>> {
+  + {static} Main() : void
+  - {static} Situation3() : void
+}
+
+class Flight <<Client>> {
+  + Number : string
+  + Flight(number : string)
+}
+
+class Journal {
+  - minutes : int
+  + Journal(startHour : int, startMinute : int)
+  + Write(source : string, message : string) : void
+}
+
+class GroundEquipmentPool <<ObjectPool>> {
+  - units : List<GroundUnit>
+  - capacity : int
+  - journal : Journal
+  + GroundEquipmentPool(capacity : int, journal : Journal)
+  + Acquire(flight : Flight) : GroundUnit
+  + Release(unit : GroundUnit, flight : Flight) : void
+}
+
+class GroundUnit <<Reusable>> {
+  + Id : string
+  + IsFree : bool
+  + AssignedTo : string
+  + GroundUnit(id : string)
+  + Assign(flightNumber : string) : void
+  + Release() : void
+}
+
+GroundEquipmentPool "1" *-- "0..*" GroundUnit : зберігає
+GroundEquipmentPool "1" --> "1" Journal : веде журнал
+GroundEquipmentPool ..> Flight : Acquire / Release
+Program ..> GroundEquipmentPool : створює
+Program ..> Flight : створює
+Program ..> Journal : створює
+
+note bottom of GroundEquipmentPool
+  Пул: тримає обмежений набір одиниць,
+  видає вільну або готує нову в межах місткості.
+end note
+note bottom of GroundUnit
+  Багаторазовий об'єкт: після Release
+  знову стає вільним і не створюється заново.
+end note
+note bottom of Flight
+  Клієнт пулу: борт, який отримує обладнання.
+end note
+@enduml
